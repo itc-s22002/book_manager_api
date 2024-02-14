@@ -22,47 +22,67 @@ router.get("/", function (req, res, next) {
 /*
 * ログイン
 */
-router.post("/login",
-    passport.authenticate("local", {failureRedirect: "/users/error"}), (req, res, next) => {
-        res.status(200).json({message: "OK"});
+// router.post("/login",
+//     passport.authenticate("local", {failureRedirect: "/users/error"}), (req, res, next) => {
+//         res.status(200).json({message: "OK"});
+//
+//     }
+// );
+// router.get("/error", (req, res, next) => {
+//     res.status(401).json({message: "name and/or password is invalid"});
+// })
 
-    }
-);
-router.get("/error", (req, res, next) => {
-    res.status(401).json({message: "name and/or password is invalid"});
-})
+router.post("/login", passport.authenticate("local", {
+    failWithError: true
+}), (req, res, next) => {
+    const {isAdmin} = req.user
+    res.json({result: "OK",isAdmin:isAdmin});
+});
 
 
 /*
 * 新規登録
 */
-router.post("/signup", async (req, res, next) => {
+router.post("/signup", [
+    // 入力値チェックミドルウェア
+    check("email").notEmpty({ignore_whitespace: true}),
+    check("password").notEmpty({ignore_whitespace: true})
+], async (req, res, next) => {
+    if (!validationResult(req).isEmpty()) {
+        res.status(400).json({result: "NG"});
+        return;
+    }
+    const {email,name, password} = req.body;
+    const salt = generateSalt();
+    const hashed = calcHash(password, salt);
     try {
-        const {name, pass} = req.body;
-        if (!name && !pass) {
-            res.status(400).json({message: "not name/pass"});
-        }else {
-            const salt = generateSalt();
-            const hashedPassword = calcHash(pass, salt);
-            await prisma.user.create({
-                data: {
-                    name,
-                    pass: hashedPassword,
-                    salt
-                }
-            });
-            res.status(201).json({message: "created!"});
-        }
+        await prisma.user.create({
+            data: {
+                email,
+                name,
+                password: hashed,
+                salt
+            }
+        });
+        res.status(201).json({
+            result: "created"
+        });
     } catch (e) {
+        // データベース側で何らかのエラーが発生したときにここへ来る。
         switch (e.code) {
             case "P2002":
-                res.status(400).json({
-                    message: "username is already registered"
-                })
-                break
+                // このエラーコードは、データベースの制約違反エラーっぽい。
+                // おそらくUnique制約が設定されている name なので
+                // すでに登録されている名前と同じ名前のユーザを登録しようとした。
+                res.status(409).json({result: "NG"});
+                break;
             default:
-                console.error(e)
-                res.status(500).json({message: "unknown error"});
+                // その他のエラー全てに対応できないので
+                // 詳細をコンソールに吐き出して、クライアントにはエラーのことだけ伝える。
+                console.error(e);
+                res.status(500).json({
+                    result: "unknown error"
+                });
         }
     }
 });
@@ -76,24 +96,6 @@ router.get("/logout", (req, res, next) => {
             return next(err);
         }
     });
-    res.status(200).json({message: "OK"});
+    res.status(200).json({result: "OK"});
 });
-
-/*
-* ユーザー一覧
-*/
-router.get("/read", async (req, res, next) => {
-    try {
-        const documents = await prisma.user.findMany({
-            select: {id: true, name: true},
-            orderBy: [
-                {createdAt: "desc"}
-            ]
-        });
-        res.status(201).json({message: "ok", documents});
-    } catch (error) {
-        res.status(500).json({message: error.message});
-    }
-})
-
 export default router;

@@ -3,16 +3,17 @@
 /**
  * Module dependencies.
  */
-
+import dotenv from "dotenv";
 import app from "../app.js";
 import debug from "debug";
 import http from "http";
 
+dotenv.config()
 const logger = debug("message-board-api:server");
 /**
  * Get port from environment and store in Express.
  */
-const port = normalizePort(process.env.PORT || '3030');
+const port = normalizePort(process.env.PORT || '3040');
 app.set('port', port);
 
 /**
