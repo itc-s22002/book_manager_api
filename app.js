@@ -10,7 +10,10 @@ import {cdate} from "cdate"
 
 import indexRouter from "./routes/index.js";
 import usersRouter from "./routes/users.js";
-import messagesRouter from "./routes/messages.js";
+import bookRouter from "./routes/book.js";
+import adminRouter from "./routes/admin.js";
+
+
 import cors from "cors"
 
 const app = express();
@@ -41,7 +44,8 @@ app.use((req, res, next) => {
 
 app.use("/", indexRouter);
 app.use("/users", usersRouter);
-app.use("/messages", messagesRouter);
+app.use("/book", bookRouter);
+app.use("/admin", adminRouter);
 
 // 404
 app.use((req, res, next) => {

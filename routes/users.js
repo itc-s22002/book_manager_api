@@ -13,24 +13,23 @@ const prisma = new PrismaClient();
 */
 router.get("/", function (req, res, next) {
     if (!req.user) {
-        res.status(401).json({message: "unauthenticated"});
+        res.status(401).json({result: "unauthenticated"});
     } else {
-        res.status(200).json({message: "logged in", user: req.user});
+        res.status(200).json({result: "logged in", user: req.user});
     }
 });
 
-/*
-* ログイン
-*/
-// router.post("/login",
-//     passport.authenticate("local", {failureRedirect: "/users/error"}), (req, res, next) => {
-//         res.status(200).json({message: "OK"});
-//
-//     }
-// );
-// router.get("/error", (req, res, next) => {
-//     res.status(401).json({message: "name and/or password is invalid"});
-// })
+/**
+ * ログイン状態のチェック
+ */
+router.get("/check", (req,res,next) =>{
+    if (!req.user) {
+        res.status(401).json({result: "NG"});
+    } else {
+        res.status(201).json({result: "OK", isAdmin: req.user.isAdmin});
+    }
+})
+
 
 router.post("/login", passport.authenticate("local", {
     failWithError: true
@@ -44,7 +43,7 @@ router.post("/login", passport.authenticate("local", {
 * 新規登録
 */
 router.post("/signup", [
-    // 入力値チェックミドルウェア
+    // 入力値チェックドルウェア
     check("email").notEmpty({ignore_whitespace: true}),
     check("password").notEmpty({ignore_whitespace: true})
 ], async (req, res, next) => {
@@ -52,11 +51,11 @@ router.post("/signup", [
         res.status(400).json({result: "NG"});
         return;
     }
-    const {email,name, password} = req.body;
+    const {email,name,password} = req.body;
     const salt = generateSalt();
     const hashed = calcHash(password, salt);
     try {
-        await prisma.user.create({
+        await prisma.users.create({
             data: {
                 email,
                 name,
@@ -80,9 +79,7 @@ router.post("/signup", [
                 // その他のエラー全てに対応できないので
                 // 詳細をコンソールに吐き出して、クライアントにはエラーのことだけ伝える。
                 console.error(e);
-                res.status(500).json({
-                    result: "unknown error"
-                });
+                res.status(500).json({result: "unknown error"});
         }
     }
 });

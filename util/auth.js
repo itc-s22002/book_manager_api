@@ -35,7 +35,7 @@ const config = (passport) => {
         usernameField: "email", passwordField: "password"
     }, async (email, password, done) => {
         try {
-            const user = await prisma.user.findUnique({
+            const user = await prisma.users.findUnique({
                 where: {email: email}
             });
             if (!user) {
@@ -57,7 +57,7 @@ const config = (passport) => {
     passport.serializeUser((user, done) => {
 
         process.nextTick(() => {
-            done(null, {id: user.id.toString(),email:user.email,name: user.name});
+            done(null, {id: user.id.toString(),email:user.email,name: user.name,isAdmin:user.isAdmin});
             // done(null, {id: user.id});
         });
     });
