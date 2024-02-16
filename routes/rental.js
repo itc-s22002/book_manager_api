@@ -1,6 +1,7 @@
 import express from "express";
 import {PrismaClient} from "@prisma/client";
 import {check, validationResult} from "express-validator";
+import cookieParser from "cookie-parser";
 
 const router = express.Router();
 const prisma = new PrismaClient();
@@ -10,34 +11,56 @@ const maxItemCount = 10;
 /**
  * ログイン状態のチェック
  */
-// router.use((req, res, next) => {
-//     if (!req.user) {
-//         res.status(401).json({message: "unauthenticated"});
-//         return;
-//     }
-//     next();
-// });
+router.use((req, res, next) => {
+    if (!req.user) {
+        res.status(401).json({message: "unauthenticated"});
+        return;
+    }
+    next();
+});
 
 /**
  * 書籍貸出
  */
 router.post("/start", async (req, res, next) => {
-    try {
-        const currentDate = new Date();
-        const returnDate = new Date(currentDate.getTime() + 7 * 24 * 60 * 60 * 1000);
-        const {bookId} = req.body
-        await prisma.rental.create({
-            data: {
-                booksId: BigInt(bookId),
-                usersId: BigInt(req.user.id),
-                returnDeadline: returnDate
-            }
-        });
-        res.status(200).json({result: "OK"});
-    } catch (error) {
-        res.status(400).json({result: "NG", error: error});
-    }
+    const {bookId} = req.body
 
+    const returnReturnDate = await prisma.rental.findMany({
+        select: {returnDate: true},
+        where: {
+            booksId: BigInt(bookId),
+            returnDate: null
+        }
+    })
+    console.log(returnReturnDate)
+    if (!Boolean(returnReturnDate[0])) {
+        try {
+            const currentDate = new Date();
+            const returnDate = new Date(currentDate.getTime() + 7 * 24 * 60 * 60 * 1000);
+            const rentalsData = await prisma.rental.create({
+                data: {
+                    booksId: BigInt(bookId),
+                    usersId: BigInt(req.user.id),
+                    returnDeadline: returnDate
+                }
+            });
+
+            const rentalInfo = {
+                id: Number(rentalsData.id),
+                bookId: Number(rentalsData.booksId),
+                rentalData: rentalsData.rentalDate,
+                returnDeadline: rentalsData.returnDeadline
+            }
+
+            console.log(rentalInfo)
+
+            res.status(200).json({result: "OK", rentalInfo});
+        } catch (error) {
+            res.status(400).json({result: "NG"});
+        }
+    } else {
+        res.status(409).json({result: "NG"});
+    }
 })
 
 /**
@@ -58,7 +81,7 @@ router.put("/return", async (req, res, next) => {
         });
         res.status(200).json({result: "OK"});
     } catch (error) {
-        res.status(400).json({result: "NG", error: error});
+        res.status(400).json({result: "NG"});
     }
 })
 
@@ -66,46 +89,44 @@ router.put("/return", async (req, res, next) => {
  * 借用書籍一覧
  */
 router.get("/current", async (req, res, next) => {
-    try {
+    const rentalBooks = await prisma.rental.findMany({
+        select: {id: true, booksId: true, book: true, rentalDate: true, returnDeadline: true},
+    })
 
-        const rentalBooks = await prisma.rental.findMany({
-                select: {id: true,booksId: true, book:true,rentalDate: true,returnDeadline:true},
-            })
+    const returnBooks = rentalBooks.map((b) => ({
+        rentalId: Number(b.id),
+        bookId: Number(b.booksId),
+        bookName: String(b.book.title),
+        rentalData: b.rentalDate,
+        returnDeadline: b.returnDeadline
+    }))
 
-        const returnBooks = rentalBooks.map((b) => ({
-            rentalId: Number(b.id),
-            bookId: Number(b.booksId),
-            bookName:String(b.book.title),
-            rentalData: b.rentalDate,
-            returnDeadline: b.returnDeadline
-        }))
+    res.status(200).json({rentalBooks: returnBooks});
 
-        res.status(200).json({rentalBooks: returnBooks});
-    } catch (error) {
-        res.status(500).json({message: error.message});
-    }
 })
 
 /**
  * 借用書籍履歴
  */
 router.get("/history", async (req, res, next) => {
-    try {
-        const rentalBooks = await prisma.rental.findMany({
-            select: {booksId: true, book:true,rentalDate: true,returnDate:true},
-        })
+    const rentalBooks = await prisma.rental.findMany({
+        select: {booksId: true, book: true, rentalDate: true, returnDate: true},
+        where:{
+            returnDate:{
+                not:null
+            }
+        }
+    })
 
-        const returnBooks = rentalBooks.map((b) => ({
-            bookId: Number(b.booksId),
-            bookName:String(b.book.title),
-            rentalData: b.rentalDate,
-            returnDate:b.rentalDate
-        }))
+    const returnBooks = rentalBooks.map((b) => ({
+        bookId: Number(b.booksId),
+        bookName: String(b.book.title),
+        rentalData: b.rentalDate,
+        returnDate: b.returnDate
+    }))
 
-        res.status(200).json({rentalHistory: returnBooks});
-    } catch (error) {
-        res.status(500).json({message: error.message});
-    }
+    res.status(200).json({rentalHistory: returnBooks});
+
 })
 
 export default router

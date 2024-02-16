@@ -8,14 +8,14 @@ const router = express.Router();
 const prisma = new PrismaClient();
 
 /* GET users listing. */
-/*
-* 状態確認
-*/
+/**
+ * ログイン状態のチェック
+ */
 router.get("/", function (req, res, next) {
     if (!req.user) {
-        res.status(401).json({result: "unauthenticated"});
+        res.status(401).json({result: "NG"});
     } else {
-        res.status(200).json({result: "logged in", user: req.user});
+        res.status(201).json({result: "OK", isAdmin: req.user.isAdmin});
     }
 });
 
@@ -30,7 +30,9 @@ router.get("/check", (req,res,next) =>{
     }
 })
 
-
+/**
+ * ログイン
+ */
 router.post("/login", passport.authenticate("local", {
     failWithError: true
 }), (req, res, next) => {
@@ -39,11 +41,10 @@ router.post("/login", passport.authenticate("local", {
 });
 
 
-/*
-* 新規登録
-*/
+/**
+ * ユーザー作成
+ */
 router.post("/signup", [
-    // 入力値チェックドルウェア
     check("email").notEmpty({ignore_whitespace: true}),
     check("password").notEmpty({ignore_whitespace: true})
 ], async (req, res, next) => {
@@ -67,24 +68,18 @@ router.post("/signup", [
             result: "created"
         });
     } catch (e) {
-        // データベース側で何らかのエラーが発生したときにここへ来る。
         switch (e.code) {
             case "P2002":
-                // このエラーコードは、データベースの制約違反エラーっぽい。
-                // おそらくUnique制約が設定されている name なので
-                // すでに登録されている名前と同じ名前のユーザを登録しようとした。
                 res.status(409).json({result: "NG"});
                 break;
             default:
-                // その他のエラー全てに対応できないので
-                // 詳細をコンソールに吐き出して、クライアントにはエラーのことだけ伝える。
                 console.error(e);
                 res.status(500).json({result: "unknown error"});
         }
     }
 });
 
-/*
+/**
 * ログアウト
 */
 router.get("/logout", (req, res, next) => {
