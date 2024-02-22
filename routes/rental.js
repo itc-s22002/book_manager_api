@@ -32,7 +32,6 @@ router.post("/start", async (req, res, next) => {
             returnDate: null
         }
     })
-    console.log(returnReturnDate)
     if (!Boolean(returnReturnDate[0])) {
         try {
             const currentDate = new Date();
@@ -90,7 +89,10 @@ router.put("/return", async (req, res, next) => {
  */
 router.get("/current", async (req, res, next) => {
     const rentalBooks = await prisma.rental.findMany({
-        select: {id: true, booksId: true, book: true, rentalDate: true, returnDeadline: true},
+        select: {id: true, booksId: true, book: true, rentalDate: true, returnDeadline: true,returnDate:true},
+        where:{
+            returnDate:null
+        }
     })
 
     const returnBooks = rentalBooks.map((b) => ({
@@ -98,7 +100,7 @@ router.get("/current", async (req, res, next) => {
         bookId: Number(b.booksId),
         bookName: String(b.book.title),
         rentalData: b.rentalDate,
-        returnDeadline: b.returnDeadline
+        returnDeadline: b.returnDeadline,
     }))
 
     res.status(200).json({rentalBooks: returnBooks});
@@ -110,15 +112,11 @@ router.get("/current", async (req, res, next) => {
  */
 router.get("/history", async (req, res, next) => {
     const rentalBooks = await prisma.rental.findMany({
-        select: {booksId: true, book: true, rentalDate: true, returnDate: true},
-        where:{
-            returnDate:{
-                not:null
-            }
-        }
+        select: {id:true,booksId: true, book: true, rentalDate: true, returnDate: true}
     })
 
     const returnBooks = rentalBooks.map((b) => ({
+        rentalId:Number(b.id),
         bookId: Number(b.booksId),
         bookName: String(b.book.title),
         rentalData: b.rentalDate,

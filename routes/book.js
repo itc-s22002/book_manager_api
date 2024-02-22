@@ -32,18 +32,21 @@ router.get("/list", async (req, res, next) => {
         }),
         prisma.books.count()
     ])
+    const returnBooks = books.map((b) => (
+            {
+                id: Number(b.id),
+                title: b.title,
+                author: b.author,
 
-    const returnBooks = books.map((b) => ({
-        id: Number(b.id),
-        title: b.title,
-        author: b.author,
-        isRental: Boolean(!b.Rental[0].returnDate)
-    }))
+                isRental: Boolean(b.Rental.map((r) => (
+                    r.returnDate === null
+                )).pop())
 
+            }
+        )
+    )
     const maxPageCount = Math.ceil(count / maxItemCount);
-
     res.status(200).json({books: returnBooks, maxPage: maxPageCount});
-
 })
 
 /**
@@ -53,7 +56,7 @@ router.get("/detail/:id", async (req, res, next) => {
     const bid = +req.params.id;
     const [books, rental] = await Promise.all([
         prisma.books.findMany({
-            select: {id: true, isbn13: true, author: true, publishDate: true, Rental: true,},
+            select: {id: true, title:true,isbn13: true, author: true, publishDate: true, Rental: true,},
             where: {id: bid}
         }),
         prisma.rental.findMany({

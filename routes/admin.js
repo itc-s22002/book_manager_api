@@ -5,14 +5,13 @@ import {check, validationResult} from "express-validator";
 const router = express.Router();
 const prisma = new PrismaClient();
 
-const pageSize = 5;
 
 /**
  * 権限のチェック
  */
 router.use((req, res, next) => {
     if (!req.user) {
-        res.status(401).json({message: "not Login"});
+        res.status(401).json({message: "not login"});
         return;
     }
     if (!req.user.isAdmin) {
@@ -25,7 +24,16 @@ router.use((req, res, next) => {
 /**
  * 書籍情報登録
  */
-router.post("/book/create", async (req, res, next) => {
+router.post("/book/create", [
+    check("isbn13").notEmpty({ignore_whitespace: true}),
+    check("title").notEmpty({ignore_whitespace: true}),
+    check("author").notEmpty({ignore_whitespace: true}),
+    check("publishDate").notEmpty({ignore_whitespace: true}),
+],async (req, res, next) => {
+    if (!validationResult(req).isEmpty()) {
+        res.status(400).json({message: "NG"});
+        return;
+    }
     try {
         const {isbn13, title, author, publishDate} = req.body
         await prisma.books.create({
@@ -104,7 +112,7 @@ router.get("/rental/current", async (req, res, next) => {
 })
 
 /**
- * 全ユーザの貸出中書籍一覧
+ * 特定ユーザの貸出中書籍一覧
  */
 router.get("/rental/current/:uid", async (req, res, next) => {
     const uid = BigInt(req.params.uid);

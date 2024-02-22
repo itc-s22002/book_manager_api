@@ -44,7 +44,7 @@ app.use((req, res, next) => {
 
 
 app.use("/", indexRouter);
-app.use("/users", usersRouter);
+app.use("/user", usersRouter);
 app.use("/book", bookRouter);
 app.use("/admin", adminRouter);
 app.use("/rental", rentalRouter);

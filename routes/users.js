@@ -26,7 +26,7 @@ router.get("/check", (req,res,next) =>{
     if (!req.user) {
         res.status(401).json({result: "NG"});
     } else {
-        res.status(201).json({result: "OK", isAdmin: req.user.isAdmin});
+        res.status(200).json({result: "OK", isAdmin: req.user.isAdmin});
     }
 })
 
@@ -44,7 +44,7 @@ router.post("/login", passport.authenticate("local", {
 /**
  * ユーザー作成
  */
-router.post("/signup", [
+router.post("/register", [
     check("email").notEmpty({ignore_whitespace: true}),
     check("password").notEmpty({ignore_whitespace: true})
 ], async (req, res, next) => {
