@@ -4,7 +4,7 @@ import {PrismaClient} from "@prisma/client";
 const router = express.Router();
 const prisma = new PrismaClient();
 
-const maxItemCount = 10;
+const maxItemCount = 5;
 
 /**
  * ログイン状態のチェック
@@ -54,6 +54,7 @@ router.get("/list", async (req, res, next) => {
  */
 router.get("/detail/:id", async (req, res, next) => {
     const bid = +req.params.id;
+    let rentalInfo = null
     const [books, rental] = await Promise.all([
         prisma.books.findMany({
             select: {id: true, title:true,isbn13: true, author: true, publishDate: true, Rental: true,},
@@ -64,11 +65,13 @@ router.get("/detail/:id", async (req, res, next) => {
             where: {booksId: bid}
         })
     ])
-    const rentalInfo = rental.map((ren) => ({
-        userName: ren.users.name,
-        rentalDate: ren.rentalDate,
-        returnDeadline: ren.returnDeadline
-    }))
+    if (rental[0]){
+        rentalInfo = rental.map((ren) => ({
+            userName: ren.users.name,
+            rentalDate: ren.rentalDate,
+            returnDeadline: ren.returnDeadline
+        }))
+    }
     const booksInfo = books.map((b) => ({
         id: Number(b.id),
         isbn13: Number(b.isbn13),
@@ -77,7 +80,14 @@ router.get("/detail/:id", async (req, res, next) => {
         publishDate: b.publishDate,
         rentalInfo
     }))
-    res.status(200).json({booksInfo});
+    res.status(200).json({
+        id:booksInfo[0].id,
+        isbn13: booksInfo[0].isbn13,
+        title: booksInfo[0].title,
+        author: booksInfo[0].author,
+        publishDate: booksInfo[0].publishDate,
+        rentalInfo
+    });
 
 });
 export default router;

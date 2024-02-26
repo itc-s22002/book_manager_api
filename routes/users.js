@@ -15,7 +15,7 @@ router.get("/", function (req, res, next) {
     if (!req.user) {
         res.status(401).json({result: "NG"});
     } else {
-        res.status(201).json({result: "OK", isAdmin: req.user.isAdmin});
+        res.status(201).json({result: "OK", user:req.user, isAdmin: req.user.isAdmin});
     }
 });
 
@@ -26,7 +26,7 @@ router.get("/check", (req,res,next) =>{
     if (!req.user) {
         res.status(401).json({result: "NG"});
     } else {
-        res.status(200).json({result: "OK", isAdmin: req.user.isAdmin});
+        res.status(200).json({result: "OK", iaAdmin:req.user.isAdmin});
     }
 })
 

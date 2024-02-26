@@ -51,9 +51,13 @@ router.post("/start", async (req, res, next) => {
                 returnDeadline: rentalsData.returnDeadline
             }
 
-            console.log(rentalInfo)
 
-            res.status(200).json({result: "OK", rentalInfo});
+            res.status(201).json({
+                id:rentalInfo.id,
+                bookId:rentalInfo.bookId,
+                rentalDate:rentalInfo.rentalData,
+                returnDeadline:rentalInfo.returnDeadline
+            });
         } catch (error) {
             res.status(400).json({result: "NG"});
         }
@@ -99,7 +103,7 @@ router.get("/current", async (req, res, next) => {
         rentalId: Number(b.id),
         bookId: Number(b.booksId),
         bookName: String(b.book.title),
-        rentalData: b.rentalDate,
+        rentalDate: b.rentalDate,
         returnDeadline: b.returnDeadline,
     }))
 
@@ -119,7 +123,7 @@ router.get("/history", async (req, res, next) => {
         rentalId:Number(b.id),
         bookId: Number(b.booksId),
         bookName: String(b.book.title),
-        rentalData: b.rentalDate,
+        rentalDate: b.rentalDate,
         returnDate: b.returnDate
     }))
 

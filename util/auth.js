@@ -40,12 +40,12 @@ const config = (passport) => {
             });
             if (!user) {
                 // ユーザがいない
-                return done(null, false, {message: "invalid username and/or password."});
+                return done(null, false, {result: "invalid username and/or password."});
             }
             const hashed = calcHash(password, user.salt);
             if (!crypto.timingSafeEqual(user.password, hashed)) {
                 // パスワード違う
-                return done(null, false, {message: "invalid username and/or password.."});
+                return done(null, false, {result: "invalid username and/or password.."});
             }
             // OK
             return done(null, user);
@@ -55,10 +55,8 @@ const config = (passport) => {
     }));
     // セッションストアに保存
     passport.serializeUser((user, done) => {
-
         process.nextTick(() => {
-            done(null, {id: user.id.toString(),email:user.email,name: user.name,isAdmin:user.isAdmin});
-            // done(null, {id: user.id});
+            done(null, {id: user.id.toString(), email: user.email, name: user.name, isAdmin: user.isAdmin});
         });
     });
     // セッションストアから復元

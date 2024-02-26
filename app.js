@@ -14,7 +14,6 @@ import bookRouter from "./routes/book.js";
 import adminRouter from "./routes/admin.js";
 import rentalRouter from "./routes/rental.js";
 
-
 import cors from "cors"
 
 const app = express();
@@ -27,7 +26,7 @@ app.use(express.static(path.join(import.meta.dirname, "public")));
 
 // session
 app.use(session({
-    secret: "l1C1OG(v$^Nh1llK?pcm2?zF",
+    secret: "??IU^z89tg1wjH%(6oRd>l@%",
     resave: false,
     saveUninitialized: false,
     cookie: {maxAge: 60 * 60 * 1000}
@@ -36,6 +35,15 @@ app.use(session({
 app.use(passport.authenticate("session"));
 passportConfig(passport);
 
+//cors
+app.use(
+    cors({
+        origin: "http://localhost:3000",
+        credentials: true,
+    }),
+);
+
+// cdate を使えるようにする
 app.use((req, res, next) => {
     res.locals.date_format =
         (d) => cdate(d).format("YYYY-MM-DD HH:mm:ss");
@@ -49,10 +57,6 @@ app.use("/book", bookRouter);
 app.use("/admin", adminRouter);
 app.use("/rental", rentalRouter);
 
-// 404
-app.use((req, res, next) => {
-    res.status(404).json({message: "not found."});
-});
 
 /**
  * error handler
@@ -71,9 +75,16 @@ const errorHandler = (err, req, res, next) => {
         // エラーの詳細はクライアントに返さないので、ここで吐き出しておく。
         console.error(err);
     }
-    res.status(err.status || 500).json({message});
+    res.status(err.status || 500).json({result:message});
 };
 app.use(errorHandler);
+
+// 404
+app.use((req, res, next) => {
+    res.status(404).json({message: "not found."});
+});
+
+
 
 
 export default app;

@@ -29,7 +29,7 @@ router.post("/book/create", [
     check("title").notEmpty({ignore_whitespace: true}),
     check("author").notEmpty({ignore_whitespace: true}),
     check("publishDate").notEmpty({ignore_whitespace: true}),
-],async (req, res, next) => {
+], async (req, res, next) => {
     if (!validationResult(req).isEmpty()) {
         res.status(400).json({message: "NG"});
         return;
@@ -103,7 +103,7 @@ router.get("/rental/current", async (req, res, next) => {
         userName: b.users.name,
         bookId: Number(b.booksId),
         bookName: b.book.title,
-        rentalDate: (b.returnDate),
+        rentalDate: (b.rentalDate),
         returnDeadline: (b.returnDeadline)
     }))
 
@@ -116,39 +116,44 @@ router.get("/rental/current", async (req, res, next) => {
  */
 router.get("/rental/current/:uid", async (req, res, next) => {
     const uid = BigInt(req.params.uid);
+    let userName = ""
+    let books = null
 
     const rental = await
         prisma.rental.findMany({
-            where: {
-                usersId: uid,
-                returnDate: {
-                    not: null
-                }
-            },
-            select: {
-                id: true,
-                usersId: true,
-                users: true,
-                booksId: true,
-                book: true,
-                rentalDate: true,
-                returnDeadline: true
-            },
-        })
+                where: {
+                    usersId: uid,
+                    returnDate: {
+                        not: null
+                    }
+                },
+                select: {
+                    id: true,
+                    usersId: true,
+                    users: true,
+                    booksId: true,
+                    book: true,
+                    rentalDate: true,
+                    returnDeadline: true
+                },
+            }
+        )
 
-    const books = rental.map((b) => ({
-        userId: Number(b.usersId),
-        userName: b.users.name,
-        rentalBooks: {
+    if(rental[0]){
+         userName = rental[0].users.name
+            books = rental.map((b) => ({
             rentalId: Number(b.id),
             bookId: Number(b.booksId),
             bookName: b.book.title,
-            rentalDate: (b.returnDate),
+            rentalDate: (b.rentalDate),
             returnDeadline: (b.returnDeadline)
-        }
-    }))
+        }))
 
-    res.status(200).json({returnBooks: books});
+    }
+
+    const userId = Number(uid)
+
+    res.status(200).json({userId, userName, rentalBooks: books});
 
 })
 export default router
