@@ -82,9 +82,7 @@ router.get("/rental/current", async (req, res, next) => {
     const rental = await
         prisma.rental.findMany({
             where: {
-                returnDate: {
-                    not: null
-                }
+                returnDate: null
             },
             select: {
                 id: true,
@@ -123,9 +121,7 @@ router.get("/rental/current/:uid", async (req, res, next) => {
         prisma.rental.findMany({
                 where: {
                     userId: uid,
-                    returnDate: {
-                        not: null
-                    }
+                    returnDate: null
                 },
                 select: {
                     id: true,
@@ -138,6 +134,7 @@ router.get("/rental/current/:uid", async (req, res, next) => {
                 },
             }
         )
+
 
     if(rental[0]){
          userName = rental[0].users.name

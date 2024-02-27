@@ -1,12 +1,9 @@
 import express from "express";
 import {PrismaClient} from "@prisma/client";
-import {check, validationResult} from "express-validator";
-import cookieParser from "cookie-parser";
 
 const router = express.Router();
 const prisma = new PrismaClient();
 
-const maxItemCount = 10;
 
 /**
  * ログイン状態のチェック
@@ -36,7 +33,6 @@ router.post("/start", async (req, res, next) => {
         try {
             const currentDate = new Date();
             const returnDate = new Date(currentDate.getTime() + 7 * 24 * 60 * 60 * 1000);
-            console.log(returnDate)
             const rentalsData = await prisma.rental.create({
                 data: {
                     bookId: BigInt(bookId),
