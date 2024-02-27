@@ -62,7 +62,7 @@ router.get("/detail/:id", async (req, res, next) => {
         }),
         prisma.rental.findMany({
             select: {users: true, rentalDate: true, returnDeadline: true},
-            where: {booksId: bid}
+            where: {bookId: bid}
         })
     ])
     if (rental[0]){

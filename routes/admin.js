@@ -88,9 +88,9 @@ router.get("/rental/current", async (req, res, next) => {
             },
             select: {
                 id: true,
-                usersId: true,
+                userId: true,
                 users: true,
-                booksId: true,
+                bookId: true,
                 book: true,
                 rentalDate: true,
                 returnDeadline: true
@@ -99,9 +99,9 @@ router.get("/rental/current", async (req, res, next) => {
 
     const returnBooks = rental.map((b) => ({
         rentalId: Number(b.id),
-        userId: Number(b.usersId),
+        userId: Number(b.userId),
         userName: b.users.name,
-        bookId: Number(b.booksId),
+        bookId: Number(b.bookId),
         bookName: b.book.title,
         rentalDate: (b.rentalDate),
         returnDeadline: (b.returnDeadline)
@@ -122,16 +122,16 @@ router.get("/rental/current/:uid", async (req, res, next) => {
     const rental = await
         prisma.rental.findMany({
                 where: {
-                    usersId: uid,
+                    userId: uid,
                     returnDate: {
                         not: null
                     }
                 },
                 select: {
                     id: true,
-                    usersId: true,
+                    userId: true,
                     users: true,
-                    booksId: true,
+                    bookId: true,
                     book: true,
                     rentalDate: true,
                     returnDeadline: true
@@ -143,7 +143,7 @@ router.get("/rental/current/:uid", async (req, res, next) => {
          userName = rental[0].users.name
             books = rental.map((b) => ({
             rentalId: Number(b.id),
-            bookId: Number(b.booksId),
+            bookId: Number(b.bookId),
             bookName: b.book.title,
             rentalDate: (b.rentalDate),
             returnDeadline: (b.returnDeadline)
